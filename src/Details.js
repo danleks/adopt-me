@@ -1,11 +1,20 @@
-// import { useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Component } from "react";
+import Carousel from "./Carousel";
+import ErrorBoundary from "./ErrorBoundary";
+import ThemeContext from "./ThemeContext";
 
 class Details extends Component {
-  constructor(props) {
-    super(props);
+  state = { loading: true }; // due to installing @babel/plugin-proposal-class-properties
 
-    this.state = { loading: true };
+  async componentDidMount() {
+    const res = await fetch(
+      `http://pets-v2.dev-apis.com/pets?id=${this.props.params.id}`
+    );
+
+    const json = await res.json();
+
+    this.setState(Object.assign({ loading: false }, json.pets[0]));
   }
 
   render() {
@@ -13,19 +22,35 @@ class Details extends Component {
       return <h2>Loading ... </h2>;
     }
 
-    const { animal, breed, city, state, description, name } = this.state;
+    const { animal, breed, city, state, description, name, images } =
+      this.state;
 
     return (
       <div className="details">
+        <Carousel images={images} />
         <h1>{name}</h1>
         <h2>
           {animal} - {breed} - {city}, {state}
         </h2>
-        <button>Adopot {name}</button>
+        <ThemeContext.Consumer>
+          {([theme]) => (
+            <button style={{ backgroundColor: theme }}>Adopot {name}</button>
+          )}
+        </ThemeContext.Consumer>
+
         <p>{description}</p>
       </div>
     );
   }
 }
 
-export default Details;
+const WrapperDetails = () => {
+  const params = useParams();
+  return (
+    <ErrorBoundary>
+      <Details params={params} />{" "}
+    </ErrorBoundary>
+  );
+};
+
+export default WrapperDetails;
